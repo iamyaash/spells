@@ -1,0 +1,136 @@
+---
+date: '2025-07-05T11:53:00+05:30'
+draft: true
+title: 'Packaging: RPM Spec File Deep Dive'
+summary: 'Detailed explanation of RPM package file structure.'
+tags:
+- package
+- rpm
+- linux
+params:
+    author: "Yashwanth Rathakrishnan"
+    ShowReadingTime: true
+    ShowBreadCrumbs: true
+    ShowToc: true
+    TocOpen: true    
+---
+# Sample `.spec` File
+
+```spec
+Name:           hello
+Version:        1.0
+Release:        1%{?dist}
+Summary:        Simple Hello World program
+
+License:        MIT
+Source0:        hello-1.0.tar.gz
+
+BuildRequires:  gcc
+
+%description
+A simple hello world program written in C.
+
+%prep
+%setup -q
+
+%build
+gcc %{optflags} -o hello hello.c
+
+%install
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 hello %{buildroot}/usr/bin/hello
+
+%check
+./hello | grep "Hello"
+
+%files
+/usr/bin/hello
+%doc README.md
+%license LICENSE
+
+%post
+echo "Thank you for installing hello!"
+
+%changelog
+* Sat Jul 05 2025 Yashwanth Rathakrishnan <you@example.com> - 1.0-1
+- Initial package
+```
+
+## 1. `%prep` Section
+Prepares source code, unpacks files, apply patches, etc.
+```spec
+%prep
+setup -q
+```
+`setup -q` unpacks the main source tarball (`Source0`) into a directory named `<name>-<version>`.
+
+## 2. `%build` Section
+It compile/build the software
+```spec
+%build
+gcc %{optflags} -o hello hello.c
+```
+`%{optflags}` uses distro-recommended compiler flags for security and compatibility. Ensure that you add this flag when building binaries/executables.
+
+## 3. `%install` Section
+Install files into a temporary buildroot.
+```sh
+%install
+mkdir -p %{buildroot}/usr/bin
+install -m 0755 hello %{buildroot}/usr/bin/hello
+```
+`%{buildroot}` is a macro for the temporary install root.
+
+## 4. `%files` Section
+List files to include in the final RPM.
+```spec
+%files
+/usr/bin/hello
+%doc README.md
+%license LICENSE
+```
+- `/usr/bin/hello` = binary. (_macro_)
+- `%doc` = documentation file(s). (_macro_)
+- `%license` = indicates the `LICENSE` file(s). (_macro_)
+
+## 5. `%changelog` Section
+Track changes for each version, mostly used for tracking the specified changes made on certain versions.
+```sh
+%changelog
+* Sat Jul 05 2025 Yashwanth Rathakrishnan <iamyaash@mail.com> - 1.0-1
+- Package initialization
+```
+
+## 6. `%check` Section
+Runs tests to verify the build.
+```spec
+%check
+./hello | grep "Hello"
+```
+It just checks the output when `hello` is executed, but checking the package might vary based on the usage.
+
+## 7. Scriptlets
+### `%post`
+Execute the command(s) **after installing** the package.
+```sh
+%post
+echo "Thank you for install hello-1.0"
+```
+### `%pre`
+Execute the command(s) **before installing** the package.
+```sh
+%pre
+echo "Initiating the package installation..."
+```
+### `%preun`
+Execute the command(s) **after uninstalling/removing** the package.
+```sh
+%preun
+echo "Removed hello pacakge"
+```
+### `%postun`
+Execute the command(s) **before uninstalling/removing** the package.
+```sh
+%postun
+echo "Uninstalling the hello package
+```

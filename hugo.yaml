@@ -1,0 +1,35 @@
+baseURL: https://iamyaash.github.io
+languageCode: en-us
+title: Spells 🪄
+theme: ["PaperMod"]
+
+params:
+  defaultTheme: auto # to switch between dark or light according to browser theme
+  ShowCodeCopyButtons: true
+  homeInfoParams:
+    Title: Yaash's Grimoire
+    Content: A spellbook of scripts, tools, and tech incantations. This is my **_personal grimoire_**, where I store runnable code snippets, document tool usage and write down useful knowledge for future usage.
+  # socialIcons: # optional
+  #   - name: "<platform>"
+  #     url: "<link>"
+  #   - name: "<platform 2>"
+  #     url: "<link2>"
+
+outputs:
+  home:
+    - HTML
+    - RSS
+    - JSON
+
+languages:
+  en:
+    languageName: "English"
+    weight: 1
+    menu:
+      main:
+        - name: Search
+          url: search/
+          weight: 8
+        - name: Tags
+          url: tags/
+          weight: 10
