@@ -1,10 +1,12 @@
-+++
-date = '2025-02-23T18:16:08+05:30'
-draft = false
-title = 'Getting Started with nmcli (NetworkManager CLI)'
-tags = [ "docs", "usage", "nmcli", "network"]
+---
+date: '2025-02-23T18:16:08+05:30'
+draft: false
+title: 'Getting Started with nmcli (NetworkManager CLI)'
+tags:
+- nmcli
+- NetworkManager
 
-+++
+---
 
 # What is `nmcli`?
 The `nmcli` means **NetworkManager Command Line Interface**. It's command-line utility tool used for controlling `NetworkManager` and reporting network status.
