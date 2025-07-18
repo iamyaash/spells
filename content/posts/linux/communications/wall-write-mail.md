@@ -6,6 +6,7 @@ summary: "Use mail to send or receive stored messages & system notificaitons, wa
 tags:
 - communication
 - messages
+- linux
 params:
     author: "Yashwanth Rathakrishnan" 
     ShowCodeCopyButtons: true
