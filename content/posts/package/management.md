@@ -213,11 +213,14 @@ sudo apt-cache rdepends
 > - Transactions are listed with unique IDs.
 > - `yum` (on older systems) supports similar commands: `yum history`, `yum history undo`, `yum history rollback`.
 
+---
+
 # Miscellaneous Operations
 
 These are the questions, that I got when I started experimenting with package managements, so let me write this in my own terms.
 
-1. What would you do if you get any error such as "package is already installed", but you want to reinstall it anyway?
+**1. What would you do if you get any error such as "package is already installed", but you want to reinstall it anyway?**
+
 - Use `--replacepkgs` to _Install the packages even if some of them are already installed on this system_
 - Use `--replacefiles` to _Install the packages even if they replace files from other, already installed, packages._
 - Use `--force` to aggressively install the package, which combines `--replacepkgs` and `--replacefiles`.
@@ -233,7 +236,7 @@ For `dnf`:
 sudo dnf reinstall package
 ```
 
-2. How do you resolve a broken package dependency?
+**2. How do you resolve a broken package dependency?**
 
 In Debian:
 ```sh
@@ -250,7 +253,7 @@ sudo dnf check-upgrade
 sudo dnf distro-sync
 ```
 
-3. Manage Package Repositories 
+**3. Manage Package Repositories**
 
 **In RPM based**:
 This follows a different approach by installing a `.rpm` file:
@@ -280,3 +283,31 @@ Lastly, update to make the changes take effect:
 ```sh
 sudo apt update
 ```
+
+**4. What are Held and Pinned packages?**
+
+Held packges are **configured to NOT be automatically upgraded** by the system package manager during the routine updates.
+- This keeps them locked at their current version until it's manually updated.
+    - **Debian** based:
+        ```sh
+        #using high level tool
+        sudo apt-mark hold btop #hold the packge
+        apt-mark showhold # list all the hold packages
+        sudo apt-mark unhold btop #unhold the package
+        ```
+        ```sh
+        #using low level tool
+        dpkg --get-selections | grep hold # to list 
+        dpkg --get-selections | grep install
+        ```
+
+Pinned packages refers to **controlling which package version is installed or kept by specifying rules**, typically using the APT preferences system.
+- Pinning can select _specific versions, repositories, or releases as the source for certain pacakges_, and can also prevent upgrades.
+    - **RPM** based:
+    Install `dnf-plugins-core` package
+
+        ```sh
+        sudo dnf versionlock add btop # add btop to versionlock list
+        sudo dnf versionlock list # list version-locked packages
+        sudo dnf versionlock delete btop # remove btop from versionlock list
+        ```
