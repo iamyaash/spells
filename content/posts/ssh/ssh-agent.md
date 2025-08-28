@@ -23,12 +23,12 @@ params:
 - **Agent Forwarding**: Allows remote SSH sessions to use your local agent, making it possible to authenticate to further  hosts without needing to copying the private keys around.
 - **Key Management**: Easily add, remove, and list keys managed by the agent, improving operational security and ease of use. Example: `ssh-add`
 
-# Usage
+# Usage (Manual)
 To use `ssh-agent` in Linux, start the agent, add your private key, and optionally configure it for automatic use and forwarding.
 
 1. Start `ssh-agent`:
 	```sh
-	eval "$(ssh-add -s)"
+	eval "$(ssh-agent -s)"
 	```
 2. Add SSH key to agent:
 	```sh
@@ -46,4 +46,39 @@ To use `ssh-agent` in Linux, start the agent, add your private key, and optional
 	```sh
 	#example output from my device
 	4096 SHA256:<asdasdasdasdasdasdasdasdasdasdasdasdasdasdas> email@email.com (RSA)
+	```
+
+# Automatic Start Using Systemd Units
+1. **Create `ssh-agent.service`**:
+- Location: `.config/systemd/user/ssh-agent.service`
+- Ownership: `sudo chmod $USER:$USER .config/systemd/user/ssh-agent.service`
+- Permission: `sudo chmod 644 .config/systemd/user/ssh-agent.service`
+
+	```sh
+	[Unit]
+	Description=SSH Key Agent For All Users
+	After=network.target
+
+	[Service]
+	Type=simple
+	Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket
+	ExecStart=/usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
+	ExecStop=/usr/bin/pkill -u $USER ssh-agent
+
+	[Install]
+	WantedBy=default.target
+	```
+2. **Add Environment Variable `$SSH_AUTH_SOCK` in `.bashrc`**:
+	```sh
+	#ssh-agent environment variable for user systemd
+	export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
+	```
+3. **Start the service**:
+	```sh
+	sudo systemctl daemon-reload
+	```
+	```sh
+	sudo systemctl --user enable --now ssh-agent
+	sudo systemctl --user start ssh-agent
+	sudo systemctl --user status ssh-agent
 	```
