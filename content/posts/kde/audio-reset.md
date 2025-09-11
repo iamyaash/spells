@@ -1,7 +1,7 @@
 ---
 date: '2025-09-06T18:28:17+05:30'
 draft: false
-title: 'KDE: Reset Addio Configurations'
+title: 'KDE: Reset Audio Configurations'
 summary: "Quick guide on how to reset audio configurations in KDE."
 tags:
 - KDE
