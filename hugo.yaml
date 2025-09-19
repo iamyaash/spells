@@ -1,7 +1,7 @@
 baseURL: https://iamyaash.github.io
 languageCode: en-us
 title: Spells 🪄
-theme: ["PaperMod"]
+theme: ["PaperModPlus"]
 
 params:
   defaultTheme: auto # to switch between dark or light according to browser theme
