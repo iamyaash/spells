@@ -9,11 +9,9 @@ params:
   homeInfoParams:
     Title: Yaash's Grimoire
     Content: A spellbook of scripts, tools, and tech incantations. This is my **_personal grimoire_**, where I store runnable code snippets, document tool usage and write down useful knowledge for future usage.
-  # socialIcons: # optional
-  #   - name: "<platform>"
-  #     url: "<link>"
-  #   - name: "<platform 2>"
-  #     url: "<link2>"
+  socialIcons: # optional
+    - name: "RSS"
+      url: "https://iamyaash.github.io/spells/index.xml"
 
 outputs:
   home:
@@ -27,9 +25,9 @@ languages:
     weight: 1
     menu:
       main:
-        - name: Search
+        - name: 🔍 Search
           url: search/
-          weight: 8
-        - name: Tags
+          weight: 1
+        - name: 🏷️ Tags
           url: tags/
-          weight: 10
+          weight: 2
