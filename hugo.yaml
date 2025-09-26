@@ -31,3 +31,5 @@ languages:
         - name: 🏷️ Tags
           url: tags/
           weight: 2
+        - name: Archive
+          url: archives/
