@@ -7,20 +7,13 @@ Head inside your hugo site directory:
 ```sh
 cd {hugo-site}
 ```
-
-1. Add `hugo-scripts` as a submodule
 ```sh
+# add hugo-scripts as a submodule
 git submodule add --depth=1 https://codeberg.org/clforge/hugo-scripts.git scripts/
-```
 
-2. Synchronize Submodule Configuration (Recommended)
-```sh
 # Sync submodules config (safety)
 git submodule sync --recursive
-```
 
-3. Initialize and Update Submodules
-```sh
 # Initialize and update submodules
 git submodule update --init --recursive
 ```
