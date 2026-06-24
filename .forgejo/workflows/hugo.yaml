@@ -1,0 +1,144 @@
+name: Build and Deploy Hugo site
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: docker
+    container:
+      image: docker.io/hugomods/hugo:0.147.5 # Verified ARM64 container image containing Extended Hugo
+    defaults:
+      run:
+        shell: sh
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      # Install Node dependencies using standard POSIX sh syntax
+      - name: Install Node.js dependencies
+        run: |
+          if [ -f package.json ]; then
+            apk add --no-cache nodejs npm
+            if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+              npm ci
+            else
+              npm install
+            fi
+          fi
+
+      - name: Build Static Files
+        env:
+          HUGO_ENVIRONMENT: production
+        run: |
+          hugo --gc --minify
+
+      # Save the 'public' folder using the Forgejo-compatible v3 action
+      - name: Save Site Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: static-site-files
+          path: public/
+  
+  deploy:
+    runs-on: docker
+    needs: build
+    container:
+      image: docker.io/library/node:lts
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Download Site Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: static-site-files
+          path: public/
+
+      - name: Verify downloaded files
+        run: |
+          ls -la
+          ls -la public
+
+      - name: Install rsync and ssh client
+        run: |
+          apt-get update
+          apt-get install -y rsync openssh-client
+
+      # - name: Prepare SSH key
+      #   run: |
+      #     mkdir -p ~/.ssh
+      #     printf '%s\n' "${{ secrets.FREE_VM_SSH_KEY }}" > ~/.ssh/cloud-ssh-login
+      #     chmod 600 ~/.ssh/cloud-ssh-login
+
+      #     PORT="${{ secrets.FREE_VM_PORT }}"
+      #     if [ -z "$PORT" ]; then
+      #       PORT=22
+      #     fi
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "${{ secrets.FREE_VM_SSH_KEY }}" > ~/.ssh/cloud-ssh-login
+          chmod 600 ~/.ssh/cloud-ssh-login
+
+          PORT="${{ secrets.FREE_VM_PORT }}"
+          if [ -z "$PORT" ]; then
+            PORT=22
+          fi
+
+          touch ~/.ssh/known_hosts
+          ssh-keygen -R "[${{ secrets.FREE_VM_HOST }}]:$PORT" || true
+          ssh-keyscan -H -p "$PORT" "${{ secrets.FREE_VM_HOST }}" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        run: |
+          PORT="${{ secrets.FREE_VM_PORT }}"
+          if [ -z "$PORT" ]; then
+            PORT=22
+          fi
+
+          ssh -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -i ~/.ssh/cloud-ssh-login \
+              -p "$PORT" \
+              "${{ secrets.FREE_VM_USER }}@${{ secrets.FREE_VM_HOST }}" \
+              "echo SSH login works"
+
+      - name: Upload files to temp directory
+        run: |
+          PORT="${{ secrets.FREE_VM_PORT }}"
+          if [ -z "$PORT" ]; then
+            PORT=22
+          fi
+
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/cloud-ssh-login -p $PORT -o StrictHostKeyChecking=yes" \
+            public/ \
+            "${{ secrets.FREE_VM_USER }}@${{ secrets.FREE_VM_HOST }}:/tmp/hugo-deploy/"
+
+      - name: Deploy static files directly to free-vm cloud /var/www/html/spells
+        run: |
+          PORT="${{ secrets.FREE_VM_PORT }}"
+          if [ -z "$PORT" ]; then
+            PORT=22
+          fi
+
+          echo "Initiating direct sync to /var/www/html/spells..."
+
+          # Syncs directly to the target web directory, deleting old files on the VM side that no longer exist in source
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/cloud-ssh-login -p $PORT -o StrictHostKeyChecking=yes" \
+            public/ \
+            "${{ secrets.FREE_VM_USER }}@${{ secrets.FREE_VM_HOST }}:/var/www/html/spells/"
