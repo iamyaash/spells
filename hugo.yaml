@@ -1,4 +1,4 @@
-baseURL: https://iamyaash.github.io
+baseURL: https://spells.yaasharc.me/
 languageCode: en-us
 title: Spells 🪄
 theme: ["PaperModPlus"]
@@ -11,7 +11,7 @@ params:
     Content: A spellbook of scripts, tools, and tech incantations. This is my **_personal grimoire_**, where I store runnable code snippets, document tool usage and write down useful knowledge for future usage.
   socialIcons: # optional
     - name: "RSS"
-      url: "https://iamyaash.github.io/spells/index.xml"
+      url: "https://spells.yaasharc.me/"
 
 outputs:
   home:
