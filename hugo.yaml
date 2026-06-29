@@ -1,17 +1,17 @@
-baseURL: https://spells.yaasharc.me/
+baseURL: https://docs.yaasharc.me/
 languageCode: en-us
-title: Spells 🪄
+title: Documentation
 theme: ["PaperModPlus"]
 
 params:
   defaultTheme: auto # to switch between dark or light according to browser theme
   ShowCodeCopyButtons: true
   homeInfoParams:
-    Title: Yaash's Grimoire
-    Content: A spellbook of scripts, tools, and tech incantations. This is my **_personal grimoire_**, where I store runnable code snippets, document tool usage and write down useful knowledge for future usage.
+    Title: Yaash's Documentation, Notes and Scripts
+    Content: A personal collection of scripts, tools, and technical notes. I use it to store runnable code snippets, document useful commands, and keep practical knowledge for future reference.
   socialIcons: # optional
     - name: "RSS"
-      url: "https://spells.yaasharc.me/"
+      url: "https://docs.yaasharc.me/"
 
 outputs:
   home:
@@ -25,10 +25,10 @@ languages:
     weight: 1
     menu:
       main:
-        - name: 🔍 Search
+        - name: Search
           url: search/
           weight: 1
-        - name: 🏷️ Tags
+        - name: Tags
           url: tags/
           weight: 2
         - name: Archive
