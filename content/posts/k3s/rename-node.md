@@ -1,6 +1,6 @@
 ---
 date: '2026-07-02T11:28:42+05:30'
-draft: true
+draft: false
 title: 'K3s: Renaming the Nodes'
 author: "Yashwanth Rathakrishnan"
 ShowToc: true
