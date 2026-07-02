@@ -2,6 +2,9 @@
 date: '2026-07-02T11:28:42+05:30'
 draft: false
 title: 'K3s: Renaming the Nodes'
+summary: "This post shows how to rename a k3s node using the standard drain, rejoin, and relabel procedure. It walks through changing the hostname, replacing the old node entry, and restoring workload scheduling on the new node."
+tags:
+- k3s
 author: "Yashwanth Rathakrishnan"
 ShowToc: true
 TocOpen: true 
