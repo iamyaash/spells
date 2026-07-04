@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: docker
+    runs-on: hugo
     container:
       image: docker.io/hugomods/hugo:0.147.5 # Verified ARM64 container image containing Extended Hugo
     defaults:
@@ -48,7 +48,7 @@ jobs:
           path: public/
   
   deploy:
-    runs-on: docker
+    runs-on: hugo
     needs: build
     container:
       image: docker.io/library/node:lts
