@@ -1,11 +1,12 @@
 ---
 date: '2026-06-28T15:31:27+05:30'
 draft: false
-title: 'K3s: Running kubectl Without sudo (and Fixing Permission Warnings)'
+title: 'Kubectl: Running kubectl Without sudo (and Fixing Permission Warnings)'
 summary: "This guide outlines three proven methods to configure passwordless non-root kubectl access in a K3s cluster. It covers setting up your local user context, adjusting system file permissions, and permanently silencing annoying configuration permission warnings. "
 author: "Yashwanth Rathakrishnan"
 tags:
 - k3s
+- kubectl
 ShowToc: true
 TocOpen: true 
 ShowReadingTime: true
