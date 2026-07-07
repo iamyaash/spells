@@ -1,8 +1,8 @@
 ---
 date: '2026-07-07T13:47:33+05:30'
-draft: true
+draft: false
 title: "Kubectl: Safely Drain A Node"
-summary: "This post shows how to safetly evict pods using drain command "
+summary: "This post explains how to safely evict pods using the drain command. It covers how the drain command works behind the scenes, includes the essential commands you need, and ends with a practical example to demonstrate its usage."
 author: "Yashwanth Rathakrishnan"
 tags:
 - k3s
