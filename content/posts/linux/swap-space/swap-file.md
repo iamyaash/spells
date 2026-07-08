@@ -1,6 +1,6 @@
 ---
 date: '2026-07-08T13:21:43+05:30'
-draft: true
+draft: false
 title: 'Linux: Fundamentals of Swap Space'
 summary: "Linux swap memory is a portion of disk storage used as virtual memory to supplement RAM, allowing the system to continue running when physical memory is full."
 author: "Yashwanth Rathakrishnan"
