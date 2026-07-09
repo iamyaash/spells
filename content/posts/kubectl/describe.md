@@ -1,6 +1,6 @@
 ---
 date: '2026-07-09T12:47:35+05:30'
-draft: true
+draft: false
 title: 'Kubectl: Show Details of Specific/Group Resources'
 summary: "This post explains how to get detailed description of the specific or group resources using describe command. This provides a human-readable overview of k8s resources on status, events, configs and relationships with other components. "
 author: "Yashwanth Rathakrishnan"
