@@ -7,6 +7,9 @@ author: "Yashwanth Rathakrishnan"
 tags:
 - k3s
 - kubectl
+cover:
+    image: posts/kubectl/img/kubectl_cover.png
+    alt: kubectl command
 ShowToc: true
 TocOpen: true 
 ShowReadingTime: true

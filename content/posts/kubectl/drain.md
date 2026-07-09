@@ -8,6 +8,9 @@ tags:
 - k3s
 - kubectl
 - kubectl drain
+cover:
+    image: posts/kubectl/img/kubectl_cover.png
+    alt: kubectl command
 ShowToc: true
 TocOpen: true 
 ShowReadingTime: true

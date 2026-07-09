@@ -7,6 +7,9 @@ author: "Yashwanth Rathakrishnan"
 tags:
 - kubectl
 - kubectl describe
+cover:
+    image: posts/kubectl/img/kubectl_cover.png
+    alt: kubectl command
 ShowToc: true
 TocOpen: true 
 ShowReadingTime: true
