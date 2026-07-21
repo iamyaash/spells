@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: hugo
+    runs-on: low-compute
     container:
       image: docker.io/hugomods/hugo:0.147.5 # Verified ARM64 container image containing Extended Hugo
     defaults:
@@ -27,7 +27,10 @@ jobs:
         run: |
           if [ -f package.json ]; then
             apk add --no-cache nodejs npm
-            if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            if [ -f package-lock.json ] || [ -f npm-s
+            
+            hrinkwrap.json ]; then
+            
               npm ci
             else
               npm install
@@ -48,7 +51,7 @@ jobs:
           path: public/
   
   deploy:
-    runs-on: hugo
+    runs-on: low-compute
     needs: build
     container:
       image: docker.io/library/node:lts
@@ -85,60 +88,64 @@ jobs:
       #     fi
 
       - name: Prepare SSH key
+        env:
+          VM_HOST: ${{ secrets.FREE_VM_HOST }}
+          VM_PORT: ${{ secrets.FREE_VM_PORT }}
+          VM_KEY: ${{ secrets.FREE_VM_SSH }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          printf '%s\n' "${{ secrets.FREE_VM_SSH_KEY }}" > ~/.ssh/cloud-ssh-login
-          chmod 600 ~/.ssh/cloud-ssh-login
+          # Strip Windows \r line breaks and write key as 'free-vm'
+          printf '%s\n' "$VM_KEY" | tr -d '\r' > ~/.ssh/free-vm
+          chmod 600 ~/.ssh/free-vm
 
-          PORT="${{ secrets.FREE_VM_PORT }}"
-          if [ -z "$PORT" ]; then
-            PORT=22
-          fi
+          PORT="${VM_PORT:-22}"
 
           touch ~/.ssh/known_hosts
-          ssh-keygen -R "[${{ secrets.FREE_VM_HOST }}]:$PORT" || true
-          ssh-keyscan -H -p "$PORT" "${{ secrets.FREE_VM_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keygen -R "[$VM_HOST]:$PORT" || true
+          ssh-keyscan -H -p "$PORT" "$VM_HOST" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
       - name: Test SSH connection
+        env:
+          VM_USER: ${{ secrets.FREE_VM_USER }}
+          VM_HOST: ${{ secrets.FREE_VM_HOST }}
+          VM_PORT: ${{ secrets.FREE_VM_PORT }}
         run: |
-          PORT="${{ secrets.FREE_VM_PORT }}"
-          if [ -z "$PORT" ]; then
-            PORT=22
-          fi
+          PORT="${VM_PORT:-22}"
 
           ssh -o BatchMode=yes \
               -o StrictHostKeyChecking=yes \
-              -i ~/.ssh/cloud-ssh-login \
+              -i ~/.ssh/free-vm \
               -p "$PORT" \
-              "${{ secrets.FREE_VM_USER }}@${{ secrets.FREE_VM_HOST }}" \
+              "$VM_USER@$VM_HOST" \
               "echo SSH login works"
 
       - name: Upload files to temp directory
+        env:
+          VM_USER: ${{ secrets.FREE_VM_USER }}
+          VM_HOST: ${{ secrets.FREE_VM_HOST }}
+          VM_PORT: ${{ secrets.FREE_VM_PORT }}
         run: |
-          PORT="${{ secrets.FREE_VM_PORT }}"
-          if [ -z "$PORT" ]; then
-            PORT=22
-          fi
+          PORT="${VM_PORT:-22}"
 
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/cloud-ssh-login -p $PORT -o StrictHostKeyChecking=yes" \
+          rsync -av --delete --partial --inplace \
+            -e "ssh -i ~/.ssh/free-vm -p $PORT -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes" \
             public/ \
-            "${{ secrets.FREE_VM_USER }}@${{ secrets.FREE_VM_HOST }}:/tmp/hugo-deploy/"
+            "$VM_USER@$VM_HOST:/tmp/hugo-deploy/"
 
-      - name: Deploy static files directly to free-vm cloud /var/www/html/spells
+      - name: Deploy static files directly to free-vm cloud /var/www/html/docs
+        env:
+          VM_USER: ${{ secrets.FREE_VM_USER }}
+          VM_HOST: ${{ secrets.FREE_VM_HOST }}
+          VM_PORT: ${{ secrets.FREE_VM_PORT }}
         run: |
-          PORT="${{ secrets.FREE_VM_PORT }}"
-          if [ -z "$PORT" ]; then
-            PORT=22
-          fi
+          PORT="${VM_PORT:-22}"
 
-          echo "Initiating direct sync to /var/www/html/spells..."
+          echo "Initiating direct sync to /var/www/html/docs..."
 
-          # Syncs directly to the target web directory, deleting old files on the VM side that no longer exist in source
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/cloud-ssh-login -p $PORT -o StrictHostKeyChecking=yes" \
+          rsync -av --delete --partial --inplace \
+            -e "ssh -i ~/.ssh/free-vm -p $PORT -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes" \
             public/ \
-            "${{ secrets.FREE_VM_USER }}@${{ secrets.FREE_VM_HOST }}:/var/www/html/spells/"
+            "$VM_USER@$VM_HOST:/var/www/html/docs/"
