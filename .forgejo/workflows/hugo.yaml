@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: low-compute
+    runs-on: tiny-machine
     container:
       image: docker.io/hugomods/hugo:0.147.5 # Verified ARM64 container image containing Extended Hugo
     defaults:
@@ -51,7 +51,7 @@ jobs:
           path: public/
   
   deploy:
-    runs-on: low-compute
+    runs-on: tiny-machine
     needs: build
     container:
       image: docker.io/library/node:lts
