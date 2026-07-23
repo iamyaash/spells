@@ -123,6 +123,19 @@ jobs:
             public/ \
             "$VM_USER@$VM_HOST:/tmp/hugo-deploy/"
 
+      - name: Prepare remote web directory
+        env:
+          VM_USER: ${{ secrets.FREE_VM_USER }}
+          VM_HOST: ${{ secrets.FREE_VM_HOST }}
+          VM_PORT: ${{ secrets.FREE_VM_PORT }}
+        run: |
+          set -eux
+          PORT="${VM_PORT:-22}"
+          ssh -i ~/.ssh/free-vm -p "$PORT" \
+            -o StrictHostKeyChecking=yes \
+            "$VM_USER@$VM_HOST" \
+            'mkdir -p /var/www/html/docs'
+
       - name: Deploy static files directly to free-vm cloud /var/www/html/docs
         env:
           VM_USER: ${{ secrets.FREE_VM_USER }}
@@ -132,7 +145,7 @@ jobs:
           set -eux
           PORT="${VM_PORT:-22}"
           /usr/bin/rsync -av --delete --partial --inplace \
-            --rsync-path=/usr/bin/rsync \
-            -e "ssh -i ~/.ssh/free-vm -p $PORT -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes" \
+            --rsync-path="sudo /usr/bin/rsync" \
+            -e "ssh -i /root/.ssh/free-vm -p $PORT -o UserKnownHostsFile=/root/.ssh/known_hosts -o StrictHostKeyChecking=yes" \
             public/ \
             "$VM_USER@$VM_HOST:/var/www/html/docs/"
