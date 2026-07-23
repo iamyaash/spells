@@ -87,26 +87,6 @@ jobs:
       #       PORT=22
       #     fi
 
-      - name: Prepare SSH key
-        env:
-          VM_HOST: ${{ secrets.FREE_VM_HOST }}
-          VM_PORT: ${{ secrets.FREE_VM_PORT }}
-          VM_KEY: ${{ secrets.FREE_VM_SSH }}
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          # Strip Windows \r line breaks and write key as 'free-vm'
-          printf '%s\n' "$VM_KEY" | tr -d '\r' > ~/.ssh/free-vm
-          chmod 600 ~/.ssh/free-vm
-
-          PORT="${VM_PORT:-22}"
-
-          touch ~/.ssh/known_hosts
-          ssh-keygen -R "[$VM_HOST]:$PORT" || true
-          ssh-keyscan -H -p "$PORT" "$VM_HOST" >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
-
       - name: Test SSH connection
         env:
           VM_USER: ${{ secrets.FREE_VM_USER }}
@@ -128,9 +108,10 @@ jobs:
           VM_HOST: ${{ secrets.FREE_VM_HOST }}
           VM_PORT: ${{ secrets.FREE_VM_PORT }}
         run: |
+          set -eux
           PORT="${VM_PORT:-22}"
-
-          rsync -av --delete --partial --inplace \
+          /usr/bin/rsync -av --delete --partial --inplace \
+            --rsync-path=/usr/bin/rsync \
             -e "ssh -i ~/.ssh/free-vm -p $PORT -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes" \
             public/ \
             "$VM_USER@$VM_HOST:/tmp/hugo-deploy/"
@@ -141,11 +122,10 @@ jobs:
           VM_HOST: ${{ secrets.FREE_VM_HOST }}
           VM_PORT: ${{ secrets.FREE_VM_PORT }}
         run: |
+          set -eux
           PORT="${VM_PORT:-22}"
-
-          echo "Initiating direct sync to /var/www/html/docs..."
-
-          rsync -av --delete --partial --inplace \
+          /usr/bin/rsync -av --delete --partial --inplace \
+            --rsync-path=/usr/bin/rsync \
             -e "ssh -i ~/.ssh/free-vm -p $PORT -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes" \
             public/ \
             "$VM_USER@$VM_HOST:/var/www/html/docs/"
