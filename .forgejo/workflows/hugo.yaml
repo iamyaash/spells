@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: tiny-machine
     container:
-      image: docker.io/hugomods/hugo:0.147.5 # Verified ARM64 container image containing Extended Hugo
+      image: docker.io/hugomods/hugo:0.147.5
     defaults:
       run:
         shell: sh
@@ -22,7 +22,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      # Install Node dependencies using standard POSIX sh syntax
       - name: Install Node.js dependencies
         run: |
           if [ -f package.json ]; then
@@ -43,7 +42,6 @@ jobs:
         run: |
           hugo --gc --minify
 
-      # Save the 'public' folder using the Forgejo-compatible v3 action
       - name: Save Site Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -76,16 +74,23 @@ jobs:
           apt-get update
           apt-get install -y rsync openssh-client
 
-      # - name: Prepare SSH key
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     printf '%s\n' "${{ secrets.FREE_VM_SSH_KEY }}" > ~/.ssh/cloud-ssh-login
-      #     chmod 600 ~/.ssh/cloud-ssh-login
-
-      #     PORT="${{ secrets.FREE_VM_PORT }}"
-      #     if [ -z "$PORT" ]; then
-      #       PORT=22
-      #     fi
+      - name: Prepare SSH
+        env:
+          VM_HOST: ${{ secrets.FREE_VM_HOST }}
+          VM_PORT: ${{ secrets.FREE_VM_PORT }}
+          VM_KEY: ${{ secrets.FREE_VM_SSH }}
+        run: |
+          set -eux
+          PORT="${VM_PORT:-22}"
+          mkdir -p /root/.ssh
+          chmod 700 /root/.ssh
+          printf '%s\n' "$VM_KEY" | tr -d '\r' > /root/.ssh/free-vm
+          chmod 600 /root/.ssh/free-vm
+          : > /root/.ssh/known_hosts
+          chmod 644 /root/.ssh/known_hosts
+          ssh-keyscan -H -p "$PORT" "$VM_HOST" >> /root/.ssh/known_hosts
+          test -s /root/.ssh/free-vm
+          test -s /root/.ssh/known_hosts
 
       - name: Test SSH connection
         env:
@@ -93,14 +98,16 @@ jobs:
           VM_HOST: ${{ secrets.FREE_VM_HOST }}
           VM_PORT: ${{ secrets.FREE_VM_PORT }}
         run: |
+          set -eux
           PORT="${VM_PORT:-22}"
-
-          ssh -o BatchMode=yes \
-              -o StrictHostKeyChecking=yes \
-              -i ~/.ssh/free-vm \
-              -p "$PORT" \
-              "$VM_USER@$VM_HOST" \
-              "echo SSH login works"
+          ssh -vvv \
+            -o BatchMode=yes \
+            -o UserKnownHostsFile=/root/.ssh/known_hosts \
+            -o StrictHostKeyChecking=yes \
+            -i /root/.ssh/free-vm \
+            -p "$PORT" \
+            "$VM_USER@$VM_HOST" \
+            "echo SSH login works"
 
       - name: Upload files to temp directory
         env:
