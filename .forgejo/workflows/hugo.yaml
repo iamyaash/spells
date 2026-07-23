@@ -26,10 +26,7 @@ jobs:
         run: |
           if [ -f package.json ]; then
             apk add --no-cache nodejs npm
-            if [ -f package-lock.json ] || [ -f npm-s
-            
-            hrinkwrap.json ]; then
-            
+            if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
               npm ci
             else
               npm install
@@ -39,15 +36,14 @@ jobs:
       - name: Build Static Files
         env:
           HUGO_ENVIRONMENT: production
-        run: |
-          hugo --gc --minify
+        run: hugo --gc --minify
 
       - name: Save Site Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: static-site-files
           path: public/
-  
+
   deploy:
     runs-on: tiny-machine
     needs: build
@@ -64,88 +60,45 @@ jobs:
           name: static-site-files
           path: public/
 
-      - name: Verify downloaded files
-        run: |
-          ls -la
-          ls -la public
-
-      - name: Install rsync and ssh client
+      - name: Install rclone and SSH client
         run: |
           apt-get update
-          apt-get install -y rsync openssh-client
+          apt-get install -y rclone openssh-client ca-certificates
 
-      - name: Prepare SSH
-        env:
-          VM_HOST: ${{ secrets.FREE_VM_HOST }}
-          VM_PORT: ${{ secrets.FREE_VM_PORT }}
-          VM_KEY: ${{ secrets.FREE_VM_SSH }}
+      - name: Configure rclone for SFTP
         run: |
-          set -eux
-          PORT="${VM_PORT:-22}"
-          mkdir -p /root/.ssh
-          chmod 700 /root/.ssh
-          printf '%s\n' "$VM_KEY" | tr -d '\r' > /root/.ssh/free-vm
-          chmod 600 /root/.ssh/free-vm
-          : > /root/.ssh/known_hosts
-          chmod 644 /root/.ssh/known_hosts
-          ssh-keyscan -H -p "$PORT" "$VM_HOST" >> /root/.ssh/known_hosts
-          test -s /root/.ssh/free-vm
-          test -s /root/.ssh/known_hosts
+          mkdir -p ~/.config/rclone ~/.ssh
+          chmod 700 ~/.ssh
 
-      - name: Test SSH connection
-        env:
-          VM_USER: ${{ secrets.FREE_VM_USER }}
-          VM_HOST: ${{ secrets.FREE_VM_HOST }}
-          VM_PORT: ${{ secrets.FREE_VM_PORT }}
-        run: |
-          set -eux
-          PORT="${VM_PORT:-22}"
-          ssh -vvv \
-            -o BatchMode=yes \
-            -o UserKnownHostsFile=/root/.ssh/known_hosts \
-            -o StrictHostKeyChecking=yes \
-            -i /root/.ssh/free-vm \
-            -p "$PORT" \
-            "$VM_USER@$VM_HOST" \
-            "echo SSH login works"
+          printf '%s\n' "${{ secrets.FREE_VM_SSH }}" > ~/.ssh/free-vm
+          chmod 600 ~/.ssh/free-vm
 
-      - name: Upload files to temp directory
-        env:
-          VM_USER: ${{ secrets.FREE_VM_USER }}
-          VM_HOST: ${{ secrets.FREE_VM_HOST }}
-          VM_PORT: ${{ secrets.FREE_VM_PORT }}
-        run: |
-          set -eux
-          PORT="${VM_PORT:-22}"
-          /usr/bin/rsync -av --delete --partial --inplace \
-            --rsync-path=/usr/bin/rsync \
-            -e "ssh -i ~/.ssh/free-vm -p $PORT -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o TCPKeepAlive=yes" \
-            public/ \
-            "$VM_USER@$VM_HOST:/tmp/hugo-deploy/"
+          PORT="${{ secrets.FREE_VM_PORT }}"
+          if [ -z "$PORT" ]; then
+            PORT=22
+          fi
 
-      - name: Prepare remote web directory
-        env:
-          VM_USER: ${{ secrets.FREE_VM_USER }}
-          VM_HOST: ${{ secrets.FREE_VM_HOST }}
-          VM_PORT: ${{ secrets.FREE_VM_PORT }}
-        run: |
-          set -eux
-          PORT="${VM_PORT:-22}"
-          ssh -i ~/.ssh/free-vm -p "$PORT" \
-            -o StrictHostKeyChecking=yes \
-            "$VM_USER@$VM_HOST" \
-            'mkdir -p /var/www/html/docs'
+          cat > ~/.config/rclone/rclone.conf <<EOF
+          [freevm]
+          type = sftp
+          host = ${{ secrets.FREE_VM_HOST }}
+          user = ${{ secrets.FREE_VM_USER }}
+          port = $PORT
+          key_file = /root/.ssh/free-vm
+          shell_type = unix
+          md5sum_command = none
+          sha1sum_command = none
+          EOF
 
-      - name: Deploy static files directly to free-vm cloud /var/www/html/docs
-        env:
-          VM_USER: ${{ secrets.FREE_VM_USER }}
-          VM_HOST: ${{ secrets.FREE_VM_HOST }}
-          VM_PORT: ${{ secrets.FREE_VM_PORT }}
+          chmod 600 ~/.config/rclone/rclone.conf
+
+      - name: Verify rclone connection
         run: |
-          set -eux
-          PORT="${VM_PORT:-22}"
-          /usr/bin/rsync -av --delete --partial --inplace \
-            --rsync-path="sudo /usr/bin/rsync" \
-            -e "ssh -i /root/.ssh/free-vm -p $PORT -o UserKnownHostsFile=/root/.ssh/known_hosts -o StrictHostKeyChecking=yes" \
-            public/ \
-            "$VM_USER@$VM_HOST:/var/www/html/docs/"
+          rclone lsf freevm:/var/www/html/ || true
+
+      - name: Deploy site with rclone
+        run: |
+          rclone sync public/ freevm:/var/www/html/docs/ \
+            --delete-during \
+            --fast-list \
+            --links
